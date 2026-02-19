@@ -8,12 +8,11 @@
             "continue": true
         },
         {
-            "src": "^/favicon.ico$",
-            "continue": true
+            "handle": "filesystem"
         },
         {
-            "src": "^/(.*)",
-            "dest": "/Home.html"
+            "src": "/.*",
+            "dest": "/index.html"
         }
     ]
 }
