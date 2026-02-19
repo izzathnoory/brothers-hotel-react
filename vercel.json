@@ -8,7 +8,11 @@
             "continue": true
         },
         {
-            "src": "/(.*)",
+            "src": "^/favicon.ico$",
+            "continue": true
+        },
+        {
+            "src": "^/(.*)",
             "dest": "/Home.html"
         }
     ]
