@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-neutral-50 text-neutral-900;
+  }
+}
+
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-brand-maroon: #420909;
+  --color-brand-gold: #FFD700;
+}
