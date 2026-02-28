@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight, MapPin, Clock } from 'lucide-react'
 import { useSettings } from '../context/SettingsContext'
+import heroImage from '../assets/images/home-hero.jpg'
 
 const Home = () => {
     const { settings } = useSettings()
@@ -8,8 +9,7 @@ const Home = () => {
         <div className="flex flex-col">
             {/* Hero Section */}
             <section className="relative h-[80vh] flex items-center justify-center bg-neutral-900 text-white overflow-hidden">
-                {/* Background Image Placeholder - In real app, use an actual image */}
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')] bg-cover bg-center opacity-40"></div>
+                <img src={heroImage} alt="Brothers Hotel - Authentic Sri Lankan Cuisine" className="absolute inset-0 w-full h-full object-cover opacity-40" />
 
                 <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
                     <h1 className="text-5xl md:text-7xl font-bold mb-6 text-brand-gold drop-shadow-lg tracking-tight">
