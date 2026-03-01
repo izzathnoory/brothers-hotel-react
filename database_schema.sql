@@ -15,9 +15,15 @@ create table public.menu_items (
   description text,
   price decimal(10,2) not null,
   image_url text,
-  category_id uuid references public.categories(id) on delete set null,
   is_available boolean default true,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Create menu_item_categories junction table (many-to-many)
+create table public.menu_item_categories (
+  menu_item_id uuid references public.menu_items(id) on delete cascade,
+  category_id uuid references public.categories(id) on delete cascade,
+  primary key (menu_item_id, category_id)
 );
 
 -- Create gallery table
@@ -50,6 +56,7 @@ create table public.admin_users (
 -- Enable Row Level Security (RLS)
 alter table public.categories enable row level security;
 alter table public.menu_items enable row level security;
+alter table public.menu_item_categories enable row level security;
 alter table public.gallery enable row level security;
 alter table public.reviews enable row level security;
 alter table public.admin_users enable row level security;
@@ -62,6 +69,10 @@ create policy "Allow admin all on categories" on public.categories for all using
 -- Menu Items: Public read, Admin write
 create policy "Allow public read on menu_items" on public.menu_items for select using (true);
 create policy "Allow admin all on menu_items" on public.menu_items for all using (auth.uid() in (select id from public.admin_users));
+
+-- Menu Item Categories (junction): Public read, Admin write
+create policy "Allow public read on menu_item_categories" on public.menu_item_categories for select using (true);
+create policy "Allow admin all on menu_item_categories" on public.menu_item_categories for all using (auth.uid() in (select id from public.admin_users));
 
 -- Gallery: Public read, Admin write
 create policy "Allow public read on gallery" on public.gallery for select using (true);

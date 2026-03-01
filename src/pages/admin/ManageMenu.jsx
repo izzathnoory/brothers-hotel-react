@@ -22,10 +22,19 @@ const ManageMenu = () => {
         try {
             setLoading(true)
             const { data: cats } = await supabase.from('categories').select('*').order('name')
-            const { data: menu } = await supabase.from('menu_items').select('*, categories(name)').order('name')
+            const { data: menu } = await supabase.from('menu_items').select('*, menu_item_categories(category_id, categories(id, name))').order('name')
+
+            // Flatten junction table data into categoryIds and categoryNames
+            const processedMenu = (menu || []).map(item => {
+                const mappings = item.menu_item_categories || []
+                const categoryIds = mappings.map(m => m.category_id)
+                const categoryNames = mappings.map(m => m.categories?.name).filter(Boolean)
+                const { menu_item_categories, ...rest } = item
+                return { ...rest, categoryIds, categoryNames }
+            })
 
             setCategories(cats || [])
-            setItems(menu || [])
+            setItems(processedMenu)
         } catch (error) {
             toast.error('Error fetching data')
         } finally {
@@ -60,8 +69,8 @@ const ManageMenu = () => {
                 toast.error("Price is required")
                 return
             }
-            if (!formData.category_id) {
-                toast.error("Please select a category")
+            if (!formData.category_ids || formData.category_ids.length === 0) {
+                toast.error("Please select at least one category")
                 return
             }
         }
@@ -78,8 +87,11 @@ const ManageMenu = () => {
                 dataToSave = { name: dataToSave.name }
             } else {
                 // Menu Items
-                // Remove unused fields if any
-                delete dataToSave.categories // fetching includes this object, don't send it back
+                // Remove fields that don't belong on the menu_items table
+                delete dataToSave.categoryIds
+                delete dataToSave.categoryNames
+                const selectedCategoryIds = formData.category_ids || []
+                delete dataToSave.category_ids
 
                 // Ensure price is a number
                 if (dataToSave.price) {
@@ -93,10 +105,8 @@ const ManageMenu = () => {
                     dataToSave.offer_price = null
                 }
 
-                // Handle category_id
-                if (dataToSave.category_id === "") {
-                    dataToSave.category_id = null
-                }
+                // Store category_ids temporarily for junction sync
+                dataToSave._selectedCategoryIds = selectedCategoryIds
             }
 
             console.log("Data to save:", dataToSave)
@@ -121,19 +131,48 @@ const ManageMenu = () => {
                 delete dataToSave.imageFile
             }
 
+            // Extract category IDs before saving to menu_items
+            const selectedCategoryIds = dataToSave._selectedCategoryIds
+            delete dataToSave._selectedCategoryIds
+
             let result;
+            let itemId;
             if (editingItem) {
                 console.log("Updating item:", editingItem.id)
                 result = await supabase.from(table).update(dataToSave).eq('id', editingItem.id)
+                itemId = editingItem.id
             } else {
                 console.log("Inserting new item")
-                result = await supabase.from(table).insert([dataToSave])
+                result = await supabase.from(table).insert([dataToSave]).select('id').single()
+                itemId = result.data?.id
             }
 
             const { error } = result
             if (error) {
                 console.error("Supabase Error:", error)
                 throw error
+            }
+
+            // Sync junction table for menu items
+            if (activeTab === 'items' && itemId && selectedCategoryIds) {
+                // Delete existing mappings
+                const { error: delError } = await supabase
+                    .from('menu_item_categories')
+                    .delete()
+                    .eq('menu_item_id', itemId)
+                if (delError) throw delError
+
+                // Insert new mappings
+                if (selectedCategoryIds.length > 0) {
+                    const rows = selectedCategoryIds.map(cid => ({
+                        menu_item_id: itemId,
+                        category_id: cid,
+                    }))
+                    const { error: insError } = await supabase
+                        .from('menu_item_categories')
+                        .insert(rows)
+                    if (insError) throw insError
+                }
             }
 
             console.log("Save successful!")
@@ -154,7 +193,11 @@ const ManageMenu = () => {
 
     const openModal = (item = null) => {
         setEditingItem(item)
-        setFormData(item || { is_available: true }) // Default values
+        if (item) {
+            setFormData({ ...item, category_ids: item.categoryIds || [] })
+        } else {
+            setFormData({ is_available: true, category_ids: [] })
+        }
         setShowModal(true)
     }
 
@@ -231,7 +274,7 @@ const ManageMenu = () => {
                                                 <p className="text-sm text-brand-maroon dark:text-brand-gold font-bold">Rs. {item.price}</p>
                                             )}
                                         </div>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">{item.categories?.name}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">{item.categoryNames?.join(', ')}</p>
                                         <div className="flex gap-2 mt-1">
                                             <span className={`text-xs px-2 py-1 rounded-full ${item.is_available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                                 {item.is_available ? 'Available' : 'Out of Stock'}
@@ -306,16 +349,28 @@ const ManageMenu = () => {
                                                 placeholder="Discounted Price"
                                             />
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1 dark:text-gray-300">Category</label>
-                                            <select
-                                                className="w-full border rounded p-2 dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
-                                                value={formData.category_id || ''}
-                                                onChange={e => setFormData({ ...formData, category_id: e.target.value })}
-                                            >
-                                                <option value="">Select Category</option>
-                                                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                            </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 dark:text-gray-300">Categories</label>
+                                        <div className="border rounded p-3 dark:bg-neutral-700 dark:border-neutral-600 space-y-2 max-h-40 overflow-y-auto">
+                                            {categories.map(c => (
+                                                <label key={c.id} className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={(formData.category_ids || []).includes(c.id)}
+                                                        onChange={e => {
+                                                            const ids = formData.category_ids || []
+                                                            if (e.target.checked) {
+                                                                setFormData({ ...formData, category_ids: [...ids, c.id] })
+                                                            } else {
+                                                                setFormData({ ...formData, category_ids: ids.filter(id => id !== c.id) })
+                                                            }
+                                                        }}
+                                                        className="rounded text-brand-maroon focus:ring-brand-gold"
+                                                    />
+                                                    <span className="text-sm dark:text-gray-300">{c.name}</span>
+                                                </label>
+                                            ))}
                                         </div>
                                     </div>
 

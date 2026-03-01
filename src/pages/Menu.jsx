@@ -25,7 +25,7 @@ const Menu = () => {
 
     // Filter items based on category and search
     const filteredItems = menuItems.filter(item => {
-        const matchesCategory = selectedCategory === 'All' || item.categories?.id === selectedCategory || item.category_id === selectedCategory
+        const matchesCategory = selectedCategory === 'All' || item.categoryIds?.includes(selectedCategory)
         const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             item.description?.toLowerCase().includes(searchTerm.toLowerCase())
         return matchesCategory && matchesSearch

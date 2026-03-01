@@ -20,16 +20,33 @@ export const useMenu = () => {
 
                 if (categoriesError) throw categoriesError
 
-                // Fetch menu items
+                // Fetch menu items with their categories via junction table
                 const { data: itemsData, error: itemsError } = await supabase
                     .from('menu_items')
-                    .select('*, categories(name)')
+                    .select('*, menu_item_categories(category_id, categories(id, name))')
                     .order('name')
 
                 if (itemsError) throw itemsError
 
+                // Flatten the nested join into categoryIds and categoryNames arrays
+                const processedItems = (itemsData || []).map(item => {
+                    const mappings = item.menu_item_categories || []
+                    const categoryIds = mappings.map(m => m.category_id)
+                    const categoryNames = mappings
+                        .map(m => m.categories?.name)
+                        .filter(Boolean)
+
+                    // Remove the raw join data, add flattened arrays
+                    const { menu_item_categories, ...rest } = item
+                    return {
+                        ...rest,
+                        categoryIds,
+                        categoryNames,
+                    }
+                })
+
                 setCategories(categoriesData)
-                setMenuItems(itemsData)
+                setMenuItems(processedItems)
             } catch (err) {
                 console.error('Error fetching menu:', err)
                 setError(err.message)
