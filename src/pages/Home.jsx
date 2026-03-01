@@ -1,10 +1,15 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, MapPin, Clock } from 'lucide-react'
+import { ArrowRight, MapPin, Clock, Star } from 'lucide-react'
 import { useSettings } from '../context/SettingsContext'
+import { useMenu } from '../hooks/useMenu'
 import heroImage from '../assets/images/home-hero.jpg'
 
 const Home = () => {
     const { settings } = useSettings()
+    const { menuItems } = useMenu()
+
+    // Filter today's specials
+    const todaySpecials = menuItems.filter(item => item.isTodaySpecial && item.is_available)
     return (
         <div className="flex flex-col">
             {/* Hero Section */}
@@ -34,6 +39,73 @@ const Home = () => {
                     </div>
                 </div>
             </section>
+
+            {/* Today's Special Section */}
+            {todaySpecials.length > 0 && (
+                <section className="py-16 px-4 bg-gradient-to-b from-amber-50 to-white dark:from-neutral-800 dark:to-neutral-900">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="text-center mb-10">
+                            <div className="flex items-center justify-center gap-2 mb-2">
+                                <Star className="text-amber-500" size={28} fill="currentColor" />
+                                <h2 className="text-3xl md:text-4xl font-bold text-brand-maroon dark:text-brand-gold">Today's Special</h2>
+                                <Star className="text-amber-500" size={28} fill="currentColor" />
+                            </div>
+                            <p className="text-gray-600 dark:text-gray-400">Don't miss out on our handpicked specials for today!</p>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {todaySpecials.map(item => (
+                                <div key={item.id} className="bg-white dark:bg-neutral-800 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1 duration-300 border-2 border-amber-200 dark:border-amber-700">
+                                    <div className="h-48 overflow-hidden relative">
+                                        <img
+                                            src={item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'}
+                                            alt={item.name}
+                                            className="w-full h-full object-cover transition-transform hover:scale-110 duration-500"
+                                        />
+                                        <div className="absolute top-2 left-2">
+                                            <span className="bg-amber-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-md flex items-center gap-1">
+                                                <Star size={12} fill="currentColor" /> Special
+                                            </span>
+                                        </div>
+                                        {item.offer_text && (
+                                            <div className="absolute top-2 right-2">
+                                                <span className="bg-brand-gold text-brand-maroon px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide shadow-md">
+                                                    {item.offer_text}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="p-5">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">{item.name}</h3>
+                                            <div className="text-right">
+                                                {item.offer_price && item.offer_price < item.price ? (
+                                                    <>
+                                                        <span className="text-sm text-gray-500 line-through mr-1">Rs. {item.price}</span>
+                                                        <span className="text-lg font-bold text-brand-maroon dark:text-brand-gold">Rs. {item.offer_price}</span>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-lg font-bold text-brand-maroon dark:text-brand-gold">Rs. {item.price}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {item.description && (
+                                            <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2">{item.description}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="text-center mt-8">
+                            <Link
+                                to="/menu"
+                                className="inline-flex items-center gap-2 px-6 py-3 bg-brand-maroon text-white font-bold rounded-full hover:bg-red-800 transition-transform hover:scale-105"
+                            >
+                                View Full Menu <ArrowRight size={18} />
+                            </Link>
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {/* About Section */}
             <section className="py-20 px-4 bg-brand-maroon text-white">

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMenu } from '../hooks/useMenu'
-import { Search } from 'lucide-react'
+import { Search, Star } from 'lucide-react'
 
 const Menu = () => {
     const { categories, menuItems, loading, error } = useMenu()
@@ -82,6 +82,63 @@ const Menu = () => {
                         />
                     </div>
                 </div>
+
+                {/* Today's Special Section */}
+                {(() => {
+                    const todaySpecials = filteredItems.filter(item => item.isTodaySpecial && item.is_available)
+                    if (todaySpecials.length === 0) return null
+                    return (
+                        <div className="mb-12">
+                            <div className="flex items-center justify-center gap-2 mb-6">
+                                <Star className="text-amber-500" size={24} fill="currentColor" />
+                                <h2 className="text-2xl md:text-3xl font-bold text-brand-maroon dark:text-brand-gold">Today's Special</h2>
+                                <Star className="text-amber-500" size={24} fill="currentColor" />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {todaySpecials.map(item => (
+                                    <div key={item.id} className="bg-white dark:bg-neutral-800 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1 duration-300 border-2 border-amber-300 dark:border-amber-600">
+                                        <div className="h-48 overflow-hidden relative">
+                                            <img
+                                                src={item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'}
+                                                alt={item.name}
+                                                className="w-full h-full object-cover transition-transform hover:scale-110 duration-500"
+                                            />
+                                            <div className="absolute top-2 left-2">
+                                                <span className="bg-amber-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-md flex items-center gap-1">
+                                                    <Star size={12} fill="currentColor" /> Special
+                                                </span>
+                                            </div>
+                                            {item.offer_text && (
+                                                <div className="absolute top-2 right-2">
+                                                    <span className="bg-brand-gold text-brand-maroon px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide shadow-md">
+                                                        {item.offer_text}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="p-6">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h3 className="text-xl font-bold text-gray-900 dark:text-white">{item.name}</h3>
+                                                <div className="text-right">
+                                                    {item.offer_price && item.offer_price < item.price ? (
+                                                        <>
+                                                            <span className="text-sm text-gray-500 line-through mr-2">Rs. {item.price}</span>
+                                                            <span className="text-lg font-bold text-brand-maroon dark:text-brand-gold">Rs. {item.offer_price}</span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-lg font-bold text-brand-maroon dark:text-brand-gold">Rs. {item.price}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">{item.description}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <hr className="mt-12 border-gray-200 dark:border-gray-700" />
+                        </div>
+                    )
+                })()}
 
                 {/* Menu Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

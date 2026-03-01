@@ -15,6 +15,7 @@ import ManageMenu from './pages/admin/ManageMenu'
 import ManageGallery from './pages/admin/ManageGallery'
 import ManageReviews from './pages/admin/ManageReviews'
 import Settings from './pages/admin/Settings'
+import TodaySpecial from './pages/admin/TodaySpecial'
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
                   <Route path="gallery" element={<ManageGallery />} />
                   <Route path="reviews" element={<ManageReviews />} />
                   <Route path="settings" element={<Settings />} />
+                  <Route path="today-special" element={<TodaySpecial />} />
                   <Route index element={<Dashboard />} />
                 </Route>
               </Route>

@@ -1,5 +1,5 @@
 import { Link, Outlet } from 'react-router-dom'
-import { LayoutDashboard, UtensilsCrossed, Image, Settings, LogOut } from 'lucide-react'
+import { LayoutDashboard, UtensilsCrossed, Image, Settings, LogOut, Star } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { Toaster } from 'react-hot-toast'
 
@@ -21,6 +21,10 @@ const DashboardLayout = () => {
                     <Link to="/admin/menu" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-900 transition-colors">
                         <UtensilsCrossed size={20} />
                         Menu Management
+                    </Link>
+                    <Link to="/admin/today-special" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-900 transition-colors">
+                        <Star size={20} />
+                        Today's Special
                     </Link>
                     <Link to="/admin/gallery" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-900 transition-colors">
                         <Image size={20} />

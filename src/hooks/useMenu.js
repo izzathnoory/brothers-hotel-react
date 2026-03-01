@@ -29,6 +29,7 @@ export const useMenu = () => {
                 if (itemsError) throw itemsError
 
                 // Flatten the nested join into categoryIds and categoryNames arrays
+                const now = new Date()
                 const processedItems = (itemsData || []).map(item => {
                     const mappings = item.menu_item_categories || []
                     const categoryIds = mappings.map(m => m.category_id)
@@ -36,12 +37,21 @@ export const useMenu = () => {
                         .map(m => m.categories?.name)
                         .filter(Boolean)
 
+                    // Check if today's special is still active (within 24h)
+                    let isTodaySpecial = false
+                    if (item.today_special_at) {
+                        const markedAt = new Date(item.today_special_at)
+                        const hoursDiff = (now - markedAt) / (1000 * 60 * 60)
+                        isTodaySpecial = hoursDiff < 24
+                    }
+
                     // Remove the raw join data, add flattened arrays
                     const { menu_item_categories, ...rest } = item
                     return {
                         ...rest,
                         categoryIds,
                         categoryNames,
+                        isTodaySpecial,
                     }
                 })
 
