@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
-import { Star, Search, Image as ImageIcon } from 'lucide-react'
+import { Star, Search, Image as ImageIcon, Share2 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 
 const TodaySpecial = () => {
@@ -47,6 +47,26 @@ const TodaySpecial = () => {
         return hoursDiff < 24
     }
 
+    const shareOnWhatsApp = (item) => {
+        let message = `*TODAY'S SPECIAL at Brothers Hotel!*\n\n`
+        message += `*${item.name}*\n`
+        if (item.offer_price && item.offer_price < item.price) {
+            message += `Price: ~Rs. ${item.price}~ *Rs. ${item.offer_price}*\n`
+        } else {
+            message += `Price: *Rs. ${item.price}*\n`
+        }
+        if (item.offer_text) {
+            message += `${item.offer_text}\n`
+        }
+        if (item.description) {
+            message += `\n${item.description}\n`
+        }
+        message += `\nBrothers Hotel, Kalmunai\nAvailable for today only!`
+
+        const url = `https://wa.me/?text=${encodeURIComponent(message)}`
+        window.open(url, '_blank')
+    }
+
     const toggleSpecial = async (item) => {
         try {
             const isCurrentlySpecial = isSpecialActive(item)
@@ -59,7 +79,14 @@ const TodaySpecial = () => {
 
             if (error) throw error
 
-            toast.success(isCurrentlySpecial ? 'Removed from Today\'s Special' : 'Marked as Today\'s Special!')
+            if (!isCurrentlySpecial) {
+                toast.success('Marked as Today\'s Special! Share it on WhatsApp 👇')
+                // Auto-prompt WhatsApp share after a short delay
+                const updatedItem = { ...item, today_special_at: newValue }
+                setTimeout(() => shareOnWhatsApp(updatedItem), 500)
+            } else {
+                toast.success('Removed from Today\'s Special')
+            }
             fetchItems()
         } catch (err) {
             toast.error(err.message)
@@ -141,12 +168,21 @@ const TodaySpecial = () => {
                                     <p className="text-sm text-brand-maroon dark:text-brand-gold font-bold">Rs. {item.offer_price || item.price}</p>
                                     <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mt-1">{getTimeRemaining(item)}</p>
                                 </div>
-                                <button
-                                    onClick={() => toggleSpecial(item)}
-                                    className="self-center px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-bold hover:bg-red-200 transition-colors flex-shrink-0"
-                                >
-                                    Remove
-                                </button>
+                                <div className="flex gap-2 self-center flex-shrink-0">
+                                    <button
+                                        onClick={() => shareOnWhatsApp(item)}
+                                        className="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-bold hover:bg-green-200 transition-colors flex items-center gap-1"
+                                        title="Share on WhatsApp"
+                                    >
+                                        <Share2 size={14} /> Share
+                                    </button>
+                                    <button
+                                        onClick={() => toggleSpecial(item)}
+                                        className="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-bold hover:bg-red-200 transition-colors"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
